@@ -2,23 +2,32 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
+	"github.com/jackc/pgx/v4"
 	_ "github.com/lib/pq"
+
+	"github.com/Drozd0f/csv-app/db"
 )
 
 type Repository struct {
-	conn *sql.DB
+	conn *pgx.Conn
+	q    *db.Queries
 }
 
 func New(ctx context.Context, dbURI string) (*Repository, error) {
-	conn, err := sql.Open("postgres", dbURI)
+	conn, err := pgx.Connect(ctx, dbURI)
 	if err != nil {
 		return nil, fmt.Errorf("sql open: %w", err)
 	}
 
+	q := db.New(conn)
+	if err != nil {
+		return nil, fmt.Errorf("db prepare: %w", err)
+	}
+
 	return &Repository{
 		conn: conn,
+		q:    q,
 	}, nil
 }

@@ -33,4 +33,6 @@ func (s *Server) RegisterHandlers() {
 	{
 		v1.GET("/ping", s.ping)
 	}
+
+	s.registerCsvHandlers(v1)
 }

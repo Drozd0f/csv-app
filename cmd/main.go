@@ -15,6 +15,10 @@ func main() {
 				Name:   "run",
 				Action: runServer,
 			},
+			{
+				Name:   "migrate",
+				Action: runMigrate,
+			},
 		},
 	}
 

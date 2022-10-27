@@ -1,0 +1,11 @@
+version: "1"
+packages:
+  - name: "db"
+    emit_json_tags: true
+    emit_prepared_queries: true
+    emit_interface: false
+    path: "db"
+    queries: "./db/queries/"
+    schema: "./db/migrations/"
+    engine: "postgresql"
+    sql_package: "pgx/v4"

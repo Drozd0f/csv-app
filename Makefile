@@ -6,6 +6,9 @@ run:
 rm:
 	$(COMPOSE) rm -sfv
 
+logs:
+	docker logs ops-app-1 -f
+
 generate-sql:
 	sqlc generate
 
