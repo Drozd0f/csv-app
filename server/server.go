@@ -2,8 +2,11 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/Drozd0f/csv-app/conf"
+	_ "github.com/Drozd0f/csv-app/docs"
 	"github.com/Drozd0f/csv-app/service"
 )
 
@@ -24,6 +27,7 @@ func New(s *service.Service, c *conf.Config) *Server {
 		c:       c,
 	}
 	serv.RegisterHandlers()
+	//serv.setupSwagger()
 
 	return serv
 }
@@ -35,4 +39,11 @@ func (s *Server) RegisterHandlers() {
 	}
 
 	s.registerCsvHandlers(v1)
+	s.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 }
+
+//func (s *Server) setupSwagger() {
+//	ginSwagger.WrapHandler(swaggerfiles.Handler,
+//		ginSwagger.URL("http://localhost:8080/swagger/doc.json"),
+//		ginSwagger.DefaultModelsExpandDepth(-1))
+//}

@@ -7,6 +7,12 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// @title       CSV-APP API
+// @version     1.0
+// @description Виконання тестового завдання в EVO 2022
+
+// @host     localhost:4444
+// @BasePath /api/v1
 func main() {
 	app := &cli.App{
 		Name: "csv-app",

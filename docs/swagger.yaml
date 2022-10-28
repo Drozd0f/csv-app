@@ -1,0 +1,154 @@
+basePath: /api/v1
+definitions:
+  schemes.ResponseTransaction:
+    properties:
+      amount_original:
+        type: number
+      amount_total:
+        type: number
+      commission_client:
+        type: number
+      commission_provider:
+        type: number
+      commission_ps:
+        type: number
+      date_input:
+        type: string
+      date_post:
+        type: string
+      partner_object_id:
+        type: integer
+      payee_bank_account:
+        type: string
+      payee_bank_mfo:
+        type: integer
+      payee_id:
+        type: integer
+      payee_name:
+        type: string
+      payment_narrative:
+        type: string
+      payment_number:
+        type: string
+      payment_type:
+        type: string
+      request_id:
+        type: integer
+      service:
+        type: string
+      service_id:
+        type: integer
+      status:
+        type: string
+      terminal_id:
+        type: integer
+      transaction_id:
+        type: integer
+    type: object
+  server.Response:
+    properties:
+      message:
+        type: string
+    type: object
+host: localhost:4444
+info:
+  contact: {}
+  description: Виконання тестового завдання в EVO 2022
+  title: CSV-APP API
+  version: "1.0"
+paths:
+  /csv-file:
+    get:
+      parameters:
+      - description: Search by transaction_id
+        in: query
+        name: transaction_id
+        type: integer
+      - description: Search by terminal_id (possible to specify several ids at the
+          same time)
+        in: query
+        items:
+          type: integer
+        name: terminal_id
+        type: array
+      - description: Search by status
+        enum:
+        - accepted
+        - declined
+        in: query
+        name: status
+        type: string
+      - description: Search by payment_type
+        enum:
+        - card
+        - cash
+        in: query
+        name: payment_type
+        type: string
+      - description: From date inclusive
+        example: "2022-08-12"
+        format: date
+        in: query
+        name: from
+        type: string
+      - description: To date not inclusive
+        example: "2022-09-01"
+        format: date
+        in: query
+        name: to
+        type: string
+      - description: Search on the partially specified payment_narrative
+        in: query
+        name: payment_narrative
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Show slice transactions
+          schema:
+            items:
+              $ref: '#/definitions/schemes.ResponseTransaction'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.Response'
+      summary: show slice transactions
+      tags:
+      - Transactions
+  /csv-file/upload:
+    post:
+      parameters:
+      - description: file to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File is uploaded
+          schema:
+            $ref: '#/definitions/server.Response'
+        "422":
+          description: failed to upload file
+          schema:
+            $ref: '#/definitions/server.Response'
+      summary: upload csv file to database
+      tags:
+      - Transactions
+  /ping:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Server is alive
+          schema:
+            $ref: '#/definitions/server.Response'
+      summary: show pong
+      tags:
+      - Healthcheck
+swagger: "2.0"
