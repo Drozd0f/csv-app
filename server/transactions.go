@@ -1,15 +1,18 @@
 package server
 
 import (
+	"log"
 	"net/http"
 
+	"github.com/Drozd0f/csv-app/schemes"
 	"github.com/gin-gonic/gin"
 )
 
 func (s *Server) registerCsvHandlers(g *gin.RouterGroup) {
 	csvG := g.Group("/csv-file")
 	{
-		csvG.POST("", s.uploadCsvFile)
+		csvG.GET("", s.getTransactions)
+		csvG.POST("/upload", s.uploadCsvFile)
 	}
 }
 
@@ -30,6 +33,28 @@ func (s *Server) uploadCsvFile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "File was uploaded to database",
+		"message": "OK",
 	})
+}
+
+func (s *Server) getTransactions(c *gin.Context) {
+	var rrt schemes.RawRequestTransaction
+	if err := c.ShouldBindQuery(&rrt); err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": http.StatusText(http.StatusInternalServerError),
+		})
+		return
+	}
+
+	sliceT, err := s.service.GetSliceTransactions(c.Request.Context(), rrt)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": http.StatusText(http.StatusInternalServerError),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, sliceT)
 }

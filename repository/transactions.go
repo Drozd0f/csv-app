@@ -2,11 +2,13 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"strconv"
 	"time"
 
 	"github.com/Drozd0f/csv-app/db"
+	"github.com/Drozd0f/csv-app/schemes"
 	"github.com/jackc/pgx/v4"
 )
 
@@ -26,15 +28,38 @@ func (r *Repository) InsertToTransactions(ctx context.Context, headersIdx map[st
 		return err
 	}
 
-	tx.Commit(ctx)
+	err = tx.Commit(ctx)
+	if err != nil {
+		log.Println(err)
+	}
+
 	return nil
+}
+
+func (r *Repository) GetSliceTransactions(ctx context.Context, rt schemes.RequestTransaction) ([]db.Transaction, error) {
+	sliceT, err := r.q.SliceTransactions(ctx, db.SliceTransactionsParams{
+		TransactionID: rt.ID,
+		Status:        rt.Status,
+		PaymentType:   rt.PaymentType,
+		DatePostFrom:  rt.DatePost.From,
+		DatePostTo:    rt.DatePost.To,
+		PaymentNarrative: sql.NullString{
+			String: rt.PaymentNarrative,
+			Valid:  true,
+		},
+		TerminalID: rt.TerminalIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return sliceT, nil
 }
 
 func parseToInt32(v string) int32 {
 	i, err := strconv.ParseInt(v, 10, 32)
 	if err != nil {
 		log.Println("parse int:", err)
-		return 0
 	}
 	return int32(i)
 }
@@ -43,7 +68,6 @@ func parseToFloat32(v string) float32 {
 	i, err := strconv.ParseFloat(v, 32)
 	if err != nil {
 		log.Println("parse int:", err)
-		return 0
 	}
 	return float32(i)
 }

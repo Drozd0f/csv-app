@@ -3,11 +3,11 @@ CREATE TABLE IF NOT EXISTS transactions (
   request_id INTEGER NOT NULL,
   terminal_id INTEGER NOT NULL,
   partner_object_id INTEGER NOT NULL,
-  amount_total INTEGER NOT NULL, -- insert *100 get /100
-  amount_original INTEGER NOT NULL, -- insert *100 get /100
-  commission_ps INTEGER NOT NULL, -- insert *100 get /100
-  commission_client INTEGER NOT NULL, -- insert *100 get /100
-  commission_provider INTEGER NOT NULL, -- insert *100 get /100
+  amount_total INTEGER NOT NULL,
+  amount_original INTEGER NOT NULL,
+  commission_ps INTEGER NOT NULL,
+  commission_client INTEGER NOT NULL,
+  commission_provider INTEGER NOT NULL,
   date_input TIMESTAMP NOT NULL,
   date_post TIMESTAMP NOT NULL,
   status TEXT NOT NULL,

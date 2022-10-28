@@ -4,10 +4,13 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"strings"
 	"time"
+
+	"github.com/Drozd0f/csv-app/schemes"
 )
 
 func parseHeader(h []string) map[string]int {
@@ -57,4 +60,13 @@ main_loop:
 	}
 
 	return nil
+}
+
+func (s *Service) GetSliceTransactions(ctx context.Context, rrt schemes.RawRequestTransaction) (schemes.SliceResponseTransactions, error) {
+	storedSliceT, err := s.r.GetSliceTransactions(ctx, schemes.NewRequestTransactionFromRaw(rrt))
+	if err != nil {
+		return schemes.SliceResponseTransactions{}, fmt.Errorf("repository get slice transactions: %w", err)
+	}
+
+	return schemes.NewSliceResponseTransactionFromDB(storedSliceT), nil
 }
