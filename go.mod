@@ -13,6 +13,7 @@ require (
 	github.com/swaggo/gin-swagger v1.5.3
 	github.com/swaggo/swag v1.8.7
 	github.com/urfave/cli/v2 v2.20.3
+	go.uber.org/multierr v1.8.0
 )
 
 require (

@@ -10,6 +10,8 @@ import (
 	"github.com/Drozd0f/csv-app/db"
 )
 
+const uniqueConstraintCode = "23505"
+
 type Repository struct {
 	conn *pgx.Conn
 	q    *db.Queries
