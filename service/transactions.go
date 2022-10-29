@@ -8,23 +8,22 @@ import (
 	"io"
 	"mime/multipart"
 	"strings"
-	"time"
 
+	errs "github.com/Drozd0f/csv-app/errors"
+	"github.com/Drozd0f/csv-app/repository"
 	"github.com/Drozd0f/csv-app/schemes"
 )
 
-func parseHeader(h []string) map[string]int {
-	header := make(map[string]int, len(h))
-	for idx, nameCol := range h {
-		header[nameCol] = idx
-	}
-	return header
-}
+var (
+	ErrOpenFile         = errors.New("invalid file")
+	ErrParsing          = errors.New("invalid file signature")
+	ErrTransactionExist = errors.New("transaction exist")
+)
 
 func (s *Service) UploadCsvFile(ctx context.Context, f *multipart.FileHeader) error {
 	file, err := f.Open()
 	if err != nil {
-		return err
+		return ErrOpenFile
 	}
 
 	defer file.Close()
@@ -38,25 +37,65 @@ func (s *Service) UploadCsvFile(ctx context.Context, f *multipart.FileHeader) er
 
 		return err
 	}
-	headerIdx := parseHeader(strings.Split(string(l), ","))
+	headers := strings.Split(string(l), ",")
 	chunks := 10
+	chRows := make(chan [][]string)
+	chError := make(chan error)
 
-main_loop:
+	go s.r.InsertToTransactions(ctx, chunks, headers, chRows, chError)
+
+	var errLoop error
+
+mainLoop:
 	for {
 		records := make([][]string, 0, chunks)
-		for len(records) != chunks {
-			l, _, err := reader.ReadLine()
-			if err != nil {
-				if errors.Is(err, io.EOF) {
-					break main_loop
-				}
+		select {
+		case <-ctx.Done():
+			break mainLoop
+		default:
+			for len(records) != chunks {
+				l, _, err := reader.ReadLine()
+				if err != nil {
+					if errors.Is(err, io.EOF) {
+						chRows <- records
+						errLoop = <-chError
+						break mainLoop
+					}
 
-				return err
+					errLoop = err
+					break mainLoop
+				}
+				records = append(records, strings.Split(string(l), ","))
 			}
-			records = append(records, strings.Split(string(l), ","))
+
+			chRows <- records
+			if errLoop = <-chError; errLoop != nil {
+				break mainLoop
+			}
 		}
-		s.r.InsertToTransactions(ctx, headerIdx, records)
-		time.Sleep(100 * time.Millisecond)
+	}
+
+	if errLoop != nil {
+		switch {
+		case errors.Is(errLoop, repository.ErrParsing):
+			var erw *errs.ErrorWithMessage
+			if errors.As(errLoop, &erw) {
+				return &errs.ErrorWithMessage{
+					Err: ErrParsing,
+					Msg: erw.Msg,
+				}
+			}
+		case errors.Is(errLoop, repository.ErrUniqueConstraint):
+			var erw *errs.ErrorWithMessage
+			if errors.As(errLoop, &erw) {
+				return &errs.ErrorWithMessage{
+					Err: ErrTransactionExist,
+					Msg: erw.Msg,
+				}
+			}
+		}
+
+		return errLoop
 	}
 
 	return nil

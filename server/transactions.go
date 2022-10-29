@@ -1,10 +1,12 @@
 package server
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
 	"github.com/Drozd0f/csv-app/schemes"
+	"github.com/Drozd0f/csv-app/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,7 +25,10 @@ func (s *Server) registerCsvHandlers(g *gin.RouterGroup) {
 // @Param   file formData file     true "file to upload"
 // @Success 200  {object} Response "File is uploaded"
 // @Failure 422  {object} Response "invalid content type provided"
-// @Failure 422  {object} Response "failed to upload file"
+// @Failure 400  {object} Response "onep file error"
+// @Failure 400  {object} Response "invalid file signature"
+// @Failure 400  {object} Response "transaction already exist"
+// @Failure 500  {object} Response
 // @Router  /csv-file/upload [post]
 func (s *Server) uploadCsvFile(c *gin.Context) {
 	filePtr, err := c.FormFile("file")
@@ -35,10 +40,21 @@ func (s *Server) uploadCsvFile(c *gin.Context) {
 	}
 
 	if err = s.service.UploadCsvFile(c.Request.Context(), filePtr); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, Response{
-			Message: err.Error(),
-		})
-		return
+		switch {
+		case errors.Is(err, service.ErrOpenFile),
+			errors.Is(err, service.ErrParsing),
+			errors.Is(err, service.ErrTransactionExist):
+			c.JSON(http.StatusBadRequest, Response{
+				Message: err.Error(),
+			})
+			return
+		default:
+			log.Println(err)
+			c.JSON(http.StatusInternalServerError, Response{
+				Message: http.StatusText(http.StatusInternalServerError),
+			})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, Response{
