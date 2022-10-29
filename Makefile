@@ -9,11 +9,15 @@ rm:
 logs:
 	docker logs ops-app-1 -f
 
-generate-sql:
-	sqlc generate
+init:
+	go install github.com/kyleconroy/sqlc/cmd/sqlc@latest
+	go install github.com/swaggo/swag/cmd/swag@latest
 
 fmt:
 	@swag fmt
+
+generate-sql:
+	sqlc generate
 
 generate-swagger:
 	@swag init -g ./cmd/main.go
