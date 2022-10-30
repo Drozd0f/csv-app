@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/Drozd0f/csv-app/server/middleware"
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -33,7 +34,7 @@ func New(s *service.Service, c *conf.Config) *Server {
 }
 
 func (s *Server) RegisterHandlers() {
-	v1 := s.Group("/api/v1")
+	v1 := s.Group("/api/v1", middleware.ErrorHandler)
 	{
 		v1.GET("/ping", s.ping)
 	}

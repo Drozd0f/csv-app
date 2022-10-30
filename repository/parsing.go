@@ -23,6 +23,10 @@ var (
 	headerParseToTime = []string{"DateInput", "DatePost"}
 )
 
+func parsingMsgError(colName, value, parseType, tranID string) string {
+	return fmt.Sprintf("impossible parse <%s: %s> to %s <TransactionId: %s>", colName, value, parseType, tranID)
+}
+
 func parseToInt32(v string) (int32, error) {
 	i, err := strconv.ParseInt(v, 10, 32)
 	return int32(i), err
@@ -40,6 +44,7 @@ func parseToTime(v string) (time.Time, error) {
 
 func parseRow(row, headers []string) (map[string]any, error) {
 	newRow := make(map[string]any, len(row))
+	translationID := row[comparator.IdxSlice("TransactionId", headers)]
 
 	for idx, col := range row {
 		header := headers[idx]
@@ -48,7 +53,7 @@ func parseRow(row, headers []string) (map[string]any, error) {
 			if err != nil {
 				return nil, &errs.ErrorWithMessage{
 					Err: ErrParsing,
-					Msg: fmt.Sprintf("impossible parse %s to int <TransactionId: %s>", col, row[0]),
+					Msg: parsingMsgError(header, col, "int", translationID),
 				}
 			}
 
@@ -60,7 +65,7 @@ func parseRow(row, headers []string) (map[string]any, error) {
 			if err != nil {
 				return nil, &errs.ErrorWithMessage{
 					Err: ErrParsing,
-					Msg: fmt.Sprintf("impossible parse %s to float <TransactionId: %s>", col, row[0]),
+					Msg: parsingMsgError(header, col, "float", translationID),
 				}
 			}
 
@@ -72,7 +77,7 @@ func parseRow(row, headers []string) (map[string]any, error) {
 			if err != nil {
 				return nil, &errs.ErrorWithMessage{
 					Err: ErrParsing,
-					Msg: fmt.Sprintf("impossible parse %s to time <TransactionId: %s>", col, row[0]),
+					Msg: parsingMsgError(header, col, "time", translationID),
 				}
 			}
 

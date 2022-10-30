@@ -1,12 +1,9 @@
 package server
 
 import (
-	"errors"
-	"log"
 	"net/http"
 
 	"github.com/Drozd0f/csv-app/schemes"
-	"github.com/Drozd0f/csv-app/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,41 +20,28 @@ func (s *Server) registerCsvHandlers(g *gin.RouterGroup) {
 // @Tags    Transactions
 // @Produce json
 // @Param   file formData file     true "file to upload"
-// @Success 200  {object} Response "File is uploaded"
-// @Failure 422  {object} Response "invalid content type provided"
-// @Failure 400  {object} Response "onep file error"
-// @Failure 400  {object} Response "invalid file signature"
-// @Failure 400  {object} Response "transaction already exist"
-// @Failure 500  {object} Response
+// @Success 200  {object} schemes.Response "File is uploaded"
+// @Failure 422  {object} schemes.Response "invalid content type provided"
+// @Failure 400  {object} schemes.Response "onep file error"
+// @Failure 400  {object} schemes.Response "invalid file signature"
+// @Failure 400  {object} schemes.Response "transaction already exist"
+// @Failure 500  {object} schemes.Response
 // @Router  /csv-file/upload [post]
 func (s *Server) uploadCsvFile(c *gin.Context) {
 	filePtr, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, Response{
+		c.JSON(http.StatusUnprocessableEntity, schemes.Response{
 			Message: err.Error(),
 		})
 		return
 	}
 
 	if err = s.service.UploadCsvFile(c.Request.Context(), filePtr); err != nil {
-		switch {
-		case errors.Is(err, service.ErrOpenFile),
-			errors.Is(err, service.ErrParsing),
-			errors.Is(err, service.ErrTransactionExist):
-			c.JSON(http.StatusBadRequest, Response{
-				Message: err.Error(),
-			})
-			return
-		default:
-			log.Println(err)
-			c.JSON(http.StatusInternalServerError, Response{
-				Message: http.StatusText(http.StatusInternalServerError),
-			})
-			return
-		}
+		c.Error(err)
+		return
 	}
 
-	c.JSON(http.StatusOK, Response{
+	c.JSON(http.StatusOK, schemes.Response{
 		Message: "OK",
 	})
 }
@@ -74,7 +58,7 @@ func (s *Server) uploadCsvFile(c *gin.Context) {
 // @Param   to                query    string                      false "To date not inclusive"  Format(date) example(2022-09-01)
 // @Param   payment_narrative query    string                      false "Search on the partially specified payment_narrative"
 // @Success 200               {array}  schemes.ResponseTransaction "Show slice transactions"
-// @Failure 500               {object} Response
+// @Failure 500               {object} schemes.Response
 // @Router  /csv-file [get]
 func (s *Server) getTransactions(c *gin.Context) {
 	var rrt schemes.RawRequestTransaction
@@ -82,10 +66,7 @@ func (s *Server) getTransactions(c *gin.Context) {
 
 	sliceT, err := s.service.GetSliceTransactions(c.Request.Context(), rrt)
 	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusInternalServerError, Response{
-			Message: http.StatusText(http.StatusInternalServerError),
-		})
+		c.Error(err)
 		return
 	}
 

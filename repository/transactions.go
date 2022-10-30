@@ -47,7 +47,7 @@ mainLoop:
 					if pgError.Code == uniqueConstraintCode {
 						err = &errs.ErrorWithMessage{
 							Err: ErrUniqueConstraint,
-							Msg: fmt.Sprintf("transaction insert error: %s", strings.ToLower(pgError.Detail)),
+							Msg: fmt.Sprintf("transaction insert error %s", strings.ToLower(pgError.Detail)),
 						}
 						chError <- multierr.Append(err, tx.Rollback(ctx))
 						return
