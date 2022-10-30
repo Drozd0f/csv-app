@@ -2,12 +2,13 @@ COMPOSE ?= docker-compose -f ops/docker-compose.yml
 
 run:
 	$(COMPOSE) up --build --force-recreate -d
+	@echo swagger documentation - http://localhost:4444/swagger/index.html
 
 rm:
 	$(COMPOSE) rm -sfv
 
 logs:
-	docker logs ops-app-1 -f
+	$(COMPOSE) logs app -f
 
 init:
 	go install github.com/kyleconroy/sqlc/cmd/sqlc@latest

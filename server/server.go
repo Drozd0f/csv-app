@@ -59,6 +59,8 @@ func (s *Server) RegisterHandlers() {
 		s.GET("/debug/pprof/heap", gin.WrapH(pprof.Handler("heap")))
 		s.GET("/debug/pprof/mutex", gin.WrapH(pprof.Handler("mutex")))
 		s.GET("/debug/pprof/threadcreate", gin.WrapH(pprof.Handler("threadcreate")))
+	} else {
+		gin.SetMode(gin.ReleaseMode)
 	}
 
 	s.registerCsvHandlers(v1)

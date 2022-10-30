@@ -76,6 +76,13 @@ func (s *Server) getTransactions(c *gin.Context) {
 	c.JSON(http.StatusOK, sliceT)
 }
 
+// downloadCsvFile godoc
+// @Summary download csv file to database
+// @Tags    Transactions
+// @Produce text/csv
+// @Success 200 {file}   binary "return csv file"
+// @Failure 500 {object} schemes.Response
+// @Router  /csv-file/download [get]
 func (s *Server) downloadCsvFile(c *gin.Context) {
 	c.Writer.Header().Set("content-type", "text/csv")
 	c.Writer.Header().Set("content-disposition",

@@ -90,14 +90,39 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/schemes.ResponseTransaction"
+                                "$ref": "#/definitions/schemes.Transaction"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/server.Response"
+                            "$ref": "#/definitions/schemes.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/csv-file/download": {
+            "get": {
+                "produces": [
+                    "text/csv"
+                ],
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "download csv file to database",
+                "responses": {
+                    "200": {
+                        "description": "return csv file",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/schemes.Response"
                         }
                     }
                 }
@@ -125,13 +150,25 @@ const docTemplate = `{
                     "200": {
                         "description": "File is uploaded",
                         "schema": {
-                            "$ref": "#/definitions/server.Response"
+                            "$ref": "#/definitions/schemes.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "transaction already exist",
+                        "schema": {
+                            "$ref": "#/definitions/schemes.Response"
                         }
                     },
                     "422": {
-                        "description": "failed to upload file",
+                        "description": "invalid content type provided",
                         "schema": {
-                            "$ref": "#/definitions/server.Response"
+                            "$ref": "#/definitions/schemes.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/schemes.Response"
                         }
                     }
                 }
@@ -150,7 +187,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Server is alive",
                         "schema": {
-                            "$ref": "#/definitions/server.Response"
+                            "$ref": "#/definitions/schemes.Response"
                         }
                     }
                 }
@@ -158,7 +195,15 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "schemes.ResponseTransaction": {
+        "schemes.Response": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemes.Transaction": {
             "type": "object",
             "properties": {
                 "amount_original": {
@@ -223,14 +268,6 @@ const docTemplate = `{
                 },
                 "transaction_id": {
                     "type": "integer"
-                }
-            }
-        },
-        "server.Response": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
                 }
             }
         }

@@ -7,9 +7,10 @@ import (
 )
 
 type Config struct {
-	DBURI string
-	Addr  string
-	Debug bool
+	DBURI     string
+	Addr      string `default:":8080"`
+	Debug     bool
+	ChunkSize int32 `split_words:"true" default:"100"`
 }
 
 func New() (*Config, error) {

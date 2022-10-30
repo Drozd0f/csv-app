@@ -39,11 +39,10 @@ func (s *Service) UploadCsvFile(ctx context.Context, f *multipart.FileHeader) er
 		return err
 	}
 	headers := strings.Split(string(l), ",")
-	chunks := 10
 	chTrans := make(chan []schemes.Transaction)
 	chError := make(chan error)
 
-	go s.r.InsertToTransactions(ctx, chunks, chTrans, chError)
+	go s.r.InsertToTransactions(ctx, s.c.ChunkSize, chTrans, chError)
 	if err = <-chError; err != nil {
 		return fmt.Errorf("InsertToTransactions initial gorootine: %w", err)
 	}
@@ -52,12 +51,12 @@ func (s *Service) UploadCsvFile(ctx context.Context, f *multipart.FileHeader) er
 
 mainLoop:
 	for {
-		records := make([]schemes.Transaction, 0, chunks)
+		records := make([]schemes.Transaction, 0, s.c.ChunkSize)
 		select {
 		case <-ctx.Done():
 			break mainLoop
 		default:
-			for len(records) != chunks {
+			for int32(len(records)) != s.c.ChunkSize {
 				row, _, err := reader.ReadLine()
 				if err != nil {
 					if errors.Is(err, io.EOF) {
@@ -124,7 +123,7 @@ func (s *Service) GetFilteredTransactions(ctx context.Context, rrt schemes.RawTr
 func (s *Service) DownloadCsvFile(ctx context.Context, w io.Writer) error {
 	p := schemes.Paginator{
 		Page:  1,
-		Limit: 10, // TODO: put in config chunks
+		Limit: s.c.ChunkSize, // TODO: put in config chunks
 	}
 	writer := csv.NewWriter(w)
 	isHeaderWrote := false
