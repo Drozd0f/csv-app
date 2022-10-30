@@ -87,3 +87,15 @@ func (r *Repository) GetSliceTransactions(ctx context.Context, rt schemes.Transa
 
 	return sliceT, nil
 }
+
+func (r *Repository) GetTransactions(ctx context.Context, p schemes.Paginator) ([]db.Transaction, error) {
+	storedTrans, err := r.q.GetTransactions(ctx, db.GetTransactionsParams{
+		Offset: p.Offset(),
+		Limit:  p.Limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return storedTrans, nil
+}

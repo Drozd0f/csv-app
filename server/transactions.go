@@ -1,7 +1,9 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Drozd0f/csv-app/schemes"
 	"github.com/gin-gonic/gin"
@@ -11,6 +13,7 @@ func (s *Server) registerCsvHandlers(g *gin.RouterGroup) {
 	csvG := g.Group("/csv-file")
 	{
 		csvG.GET("", s.getTransactions)
+		csvG.GET("/download", s.downloadCsvFile)
 		csvG.POST("/upload", s.uploadCsvFile)
 	}
 }
@@ -64,11 +67,24 @@ func (s *Server) getTransactions(c *gin.Context) {
 	var rft schemes.RawTransactionFilter
 	_ = c.ShouldBindQuery(&rft)
 
-	sliceT, err := s.service.GetSliceTransactions(c.Request.Context(), rft)
+	sliceT, err := s.service.GetFilteredTransactions(c.Request.Context(), rft)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
 	c.JSON(http.StatusOK, sliceT)
+}
+
+func (s *Server) downloadCsvFile(c *gin.Context) {
+	c.Writer.Header().Set("content-type", "text/csv")
+	c.Writer.Header().Set("content-disposition",
+		fmt.Sprintf("attachment; filename=\"dump_%s.csv\"", time.Now().Format("2006-01-02 15:04:05")))
+
+	if err := s.service.DownloadCsvFile(c.Request.Context(), c.Writer); err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.Writer.WriteHeader(http.StatusOK)
 }
