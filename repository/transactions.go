@@ -16,30 +16,24 @@ import (
 )
 
 var (
-	ErrParsing          = errors.New("parsing error")
 	ErrUniqueConstraint = errors.New("unique constraint")
 )
 
-func (r *Repository) InsertToTransactions(ctx context.Context, chunkSize int, headers []string, chRows chan [][]string, chError chan error) {
+func (r *Repository) InsertToTransactions(ctx context.Context, chunkSize int, chRows chan []schemes.Transaction, chError chan error) {
 	tx, err := r.conn.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		chError <- err
 		return
 	}
+	chError <- nil
 
 mainLoop:
 	for {
 		select {
 		case <-ctx.Done():
-			chError <- nil
 			return
 		case rows := <-chRows:
-			tranParam, err := parseToTransactionsParams(headers, rows)
-			if err != nil {
-				chError <- err
-				return
-			}
-
+			tranParam := parseToTransactionsParams(rows)
 			_, err = r.q.CreateTransactions(ctx, tranParam)
 			if err != nil {
 				var pgError *pgconn.PgError
@@ -66,8 +60,7 @@ mainLoop:
 		}
 	}
 
-	err = tx.Commit(ctx)
-	if err != nil {
+	if err = tx.Commit(ctx); err != nil {
 		chError <- err
 		return
 	}
@@ -75,7 +68,7 @@ mainLoop:
 	chError <- nil
 }
 
-func (r *Repository) GetSliceTransactions(ctx context.Context, rt schemes.RequestTransaction) ([]db.Transaction, error) {
+func (r *Repository) GetSliceTransactions(ctx context.Context, rt schemes.TransactionFilter) ([]db.Transaction, error) {
 	sliceT, err := r.q.SliceTransactions(ctx, db.SliceTransactionsParams{
 		TransactionID: rt.ID,
 		Status:        rt.Status,

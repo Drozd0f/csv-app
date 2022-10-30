@@ -39,25 +39,28 @@ func (s *Service) UploadCsvFile(ctx context.Context, f *multipart.FileHeader) er
 	}
 	headers := strings.Split(string(l), ",")
 	chunks := 10
-	chRows := make(chan [][]string)
+	chTrans := make(chan []schemes.Transaction)
 	chError := make(chan error)
 
-	go s.r.InsertToTransactions(ctx, chunks, headers, chRows, chError)
+	go s.r.InsertToTransactions(ctx, chunks, chTrans, chError)
+	if err = <-chError; err != nil {
+		return fmt.Errorf("InsertToTransactions initial gorootine: %w", err)
+	}
 
 	var errLoop error
 
 mainLoop:
 	for {
-		records := make([][]string, 0, chunks)
+		records := make([]schemes.Transaction, 0, chunks)
 		select {
 		case <-ctx.Done():
 			break mainLoop
 		default:
 			for len(records) != chunks {
-				l, _, err := reader.ReadLine()
+				row, _, err := reader.ReadLine()
 				if err != nil {
 					if errors.Is(err, io.EOF) {
-						chRows <- records
+						chTrans <- records
 						errLoop = <-chError
 						break mainLoop
 					}
@@ -65,10 +68,17 @@ mainLoop:
 					errLoop = err
 					break mainLoop
 				}
-				records = append(records, strings.Split(string(l), ","))
+
+				var t schemes.Transaction
+				if err = schemes.BindCsv(&t, strings.Split(string(row), ","), headers); err != nil {
+					errLoop = err
+					break mainLoop
+				}
+
+				records = append(records, t)
 			}
 
-			chRows <- records
+			chTrans <- records
 			if errLoop = <-chError; errLoop != nil {
 				break mainLoop
 			}
@@ -77,7 +87,7 @@ mainLoop:
 
 	if errLoop != nil {
 		switch {
-		case errors.Is(errLoop, repository.ErrParsing):
+		case errors.Is(errLoop, schemes.ErrParsing):
 			var erw *errs.ErrorWithMessage
 			if errors.As(errLoop, &erw) {
 				return &errs.ErrorWithMessage{
@@ -101,11 +111,11 @@ mainLoop:
 	return nil
 }
 
-func (s *Service) GetSliceTransactions(ctx context.Context, rrt schemes.RawRequestTransaction) (schemes.SliceResponseTransactions, error) {
-	storedSliceT, err := s.r.GetSliceTransactions(ctx, schemes.NewRequestTransactionFromRaw(rrt))
+func (s *Service) GetSliceTransactions(ctx context.Context, rrt schemes.RawTransactionFilter) (schemes.SliceTransactions, error) {
+	storedSliceT, err := s.r.GetSliceTransactions(ctx, schemes.NewTransactionFilterFromRaw(rrt))
 	if err != nil {
-		return schemes.SliceResponseTransactions{}, fmt.Errorf("repository get slice transactions: %w", err)
+		return schemes.SliceTransactions{}, fmt.Errorf("repository get slice transactions: %w", err)
 	}
 
-	return schemes.NewSliceResponseTransactionFromDB(storedSliceT), nil
+	return schemes.NewSliceTransactionFromDB(storedSliceT), nil
 }
