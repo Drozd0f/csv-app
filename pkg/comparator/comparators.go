@@ -1,21 +1,17 @@
 package comparator
 
-func InSlice[T comparable](val T, sliceVal []T) bool {
-	for _, v := range sliceVal {
-		if v == val {
-			return true
-		}
-	}
+import (
+	"errors"
+)
 
-	return false
-}
+var ErrNotInSlice = errors.New("value not in slice")
 
-func IdxSlice[T comparable](val T, sliceVal []T) int {
+func IdxSlice[T comparable](val T, sliceVal []T) (int, error) {
 	for idx, v := range sliceVal {
 		if v == val {
-			return idx
+			return idx, nil
 		}
 	}
 
-	return -1
+	return 0, ErrNotInSlice
 }

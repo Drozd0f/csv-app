@@ -19,7 +19,7 @@ func (s *Server) registerCsvHandlers(g *gin.RouterGroup) {
 // @Summary upload csv file to database
 // @Tags    Transactions
 // @Produce json
-// @Param   file formData file     true "file to upload"
+// @Param   file formData file             true "file to upload"
 // @Success 200  {object} schemes.Response "File is uploaded"
 // @Failure 422  {object} schemes.Response "invalid content type provided"
 // @Failure 400  {object} schemes.Response "onep file error"
@@ -50,21 +50,21 @@ func (s *Server) uploadCsvFile(c *gin.Context) {
 // @Summary show slice transactions
 // @Tags    Transactions
 // @Produce json
-// @Param   transaction_id    query    int                         false "Search by transaction_id"
-// @Param   terminal_id       query    []int                       false "Search by terminal_id (possible to specify several ids at the same time)"
-// @Param   status            query    string                      false "Search by status"       Enums(accepted, declined)
-// @Param   payment_type      query    string                      false "Search by payment_type" Enums(card, cash)
-// @Param   from              query    string                      false "From date inclusive"    Format(date) example(2022-08-12)
-// @Param   to                query    string                      false "To date not inclusive"  Format(date) example(2022-09-01)
-// @Param   payment_narrative query    string                      false "Search on the partially specified payment_narrative"
-// @Success 200               {array}  schemes.ResponseTransaction "Show slice transactions"
+// @Param   transaction_id    query    int                 false "Search by transaction_id"
+// @Param   terminal_id       query    []int               false "Search by terminal_id (possible to specify several ids at the same time)"
+// @Param   status            query    string              false "Search by status"       Enums(accepted, declined)
+// @Param   payment_type      query    string              false "Search by payment_type" Enums(card, cash)
+// @Param   from              query    string              false "From date inclusive"    Format(date) example(2022-08-12)
+// @Param   to                query    string              false "To date not inclusive"  Format(date) example(2022-09-01)
+// @Param   payment_narrative query    string              false "Search on the partially specified payment_narrative"
+// @Success 200               {array}  schemes.Transaction "Show slice transactions"
 // @Failure 500               {object} schemes.Response
 // @Router  /csv-file [get]
 func (s *Server) getTransactions(c *gin.Context) {
-	var rrt schemes.RawRequestTransaction
-	_ = c.ShouldBindQuery(&rrt)
+	var rft schemes.RawTransactionFilter
+	_ = c.ShouldBindQuery(&rft)
 
-	sliceT, err := s.service.GetSliceTransactions(c.Request.Context(), rrt)
+	sliceT, err := s.service.GetSliceTransactions(c.Request.Context(), rft)
 	if err != nil {
 		c.Error(err)
 		return

@@ -13,7 +13,7 @@ var (
 	DefaultString = "default"
 )
 
-type SliceResponseTransactions []ResponseTransaction
+type SliceTransactions []Transaction
 
 type RawDatePost struct {
 	From string `form:"from"`
@@ -25,7 +25,7 @@ type DatePost struct {
 	To   time.Time
 }
 
-type RawRequestTransaction struct {
+type RawTransactionFilter struct {
 	ID               string   `form:"transaction_id"`
 	Status           string   `form:"status"`
 	TerminalIDs      []string `form:"terminal_id"`
@@ -34,7 +34,7 @@ type RawRequestTransaction struct {
 	PaymentNarrative string `form:"payment_narrative"`
 }
 
-type RequestTransaction struct {
+type TransactionFilter struct {
 	ID               int32
 	Status           string
 	TerminalIDs      []int32
@@ -43,32 +43,32 @@ type RequestTransaction struct {
 	PaymentNarrative string
 }
 
-type ResponseTransaction struct {
-	TransactionID      int32     `json:"transaction_id"`
-	RequestID          int32     `json:"request_id"`
-	TerminalID         int32     `json:"terminal_id"`
-	PartnerObjectID    int32     `json:"partner_object_id"`
-	AmountTotal        float32   `json:"amount_total"`
-	AmountOriginal     float32   `json:"amount_original"`
-	CommissionPs       float32   `json:"commission_ps"`
-	CommissionClient   float32   `json:"commission_client"`
-	CommissionProvider float32   `json:"commission_provider"`
-	DateInput          time.Time `json:"date_input"`
-	DatePost           time.Time `json:"date_post"`
-	Status             string    `json:"status"`
-	PaymentType        string    `json:"payment_type"`
-	PaymentNumber      string    `json:"payment_number"`
-	ServiceID          int32     `json:"service_id"`
-	Service            string    `json:"service"`
-	PayeeID            int32     `json:"payee_id"`
-	PayeeName          string    `json:"payee_name"`
-	PayeeBankMfo       int32     `json:"payee_bank_mfo"`
-	PayeeBankAccount   string    `json:"payee_bank_account"`
-	PaymentNarrative   string    `json:"payment_narrative"`
+type Transaction struct {
+	TransactionID      int32     `json:"transaction_id" csv:"TransactionId"`
+	RequestID          int32     `json:"request_id" csv:"RequestId"`
+	TerminalID         int32     `json:"terminal_id" csv:"TerminalId"`
+	PartnerObjectID    int32     `json:"partner_object_id" csv:"PartnerObjectId"`
+	AmountTotal        float32   `json:"amount_total" csv:"AmountTotal"`
+	AmountOriginal     float32   `json:"amount_original" csv:"AmountOriginal"`
+	CommissionPs       float32   `json:"commission_ps" csv:"CommissionPS"`
+	CommissionClient   float32   `json:"commission_client" csv:"CommissionClient"`
+	CommissionProvider float32   `json:"commission_provider" csv:"CommissionProvider"`
+	DateInput          time.Time `json:"date_input" csv:"DateInput"`
+	DatePost           time.Time `json:"date_post" csv:"DatePost"`
+	Status             string    `json:"status" csv:"Status"`
+	PaymentType        string    `json:"payment_type" csv:"PaymentType"`
+	PaymentNumber      string    `json:"payment_number" csv:"PaymentNumber"`
+	ServiceID          int32     `json:"service_id" csv:"ServiceId"`
+	Service            string    `json:"service" csv:"Service"`
+	PayeeID            int32     `json:"payee_id" csv:"PayeeId"`
+	PayeeName          string    `json:"payee_name" csv:"PayeeName"`
+	PayeeBankMfo       int32     `json:"payee_bank_mfo" csv:"PayeeBankMfo"`
+	PayeeBankAccount   string    `json:"payee_bank_account" csv:"PayeeBankAccount"`
+	PaymentNarrative   string    `json:"payment_narrative" csv:"PaymentNarrative"`
 }
 
-func NewRequestTransactionFromRaw(r RawRequestTransaction) RequestTransaction {
-	return RequestTransaction{
+func NewTransactionFilterFromRaw(r RawTransactionFilter) TransactionFilter {
+	return TransactionFilter{
 		ID:               stringToInt32(r.ID),
 		Status:           stringToExpected(r.Status, statuses),
 		TerminalIDs:      sliceStringToInt32(r.TerminalIDs),
@@ -78,17 +78,17 @@ func NewRequestTransactionFromRaw(r RawRequestTransaction) RequestTransaction {
 	}
 }
 
-func NewSliceResponseTransactionFromDB(storedTransactions []db.Transaction) SliceResponseTransactions {
-	srt := make(SliceResponseTransactions, 0, len(storedTransactions))
+func NewSliceTransactionFromDB(storedTransactions []db.Transaction) SliceTransactions {
+	srt := make(SliceTransactions, 0, len(storedTransactions))
 	for _, st := range storedTransactions {
-		srt = append(srt, NewResponseTransactionFromDB(st))
+		srt = append(srt, NewTransactionFromDB(st))
 	}
 
 	return srt
 }
 
-func NewResponseTransactionFromDB(storedT db.Transaction) ResponseTransaction {
-	return ResponseTransaction{
+func NewTransactionFromDB(storedT db.Transaction) Transaction {
+	return Transaction{
 		TransactionID:      storedT.TransactionID,
 		RequestID:          storedT.RequestID,
 		TerminalID:         storedT.TerminalID,
