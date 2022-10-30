@@ -17,11 +17,11 @@ func parsingMsgError(colName, value, parseType, tranID string) string {
 	return fmt.Sprintf("impossible parse <%s: %s> to %s <TransactionId: %s>", colName, value, parseType, tranID)
 }
 
-func BindCsv(i interface{}, row, headers []string) error {
-	t := reflect.TypeOf(i).Elem()
+func BindFromCsv(i any, row, headers []string) error {
+	t := reflect.TypeOf(i).Elem() // TODO: if pointer
 	val := reflect.ValueOf(i).Elem()
 
-	fieldNames := setFieldNames(t)
+	fieldNames := getFieldNames(t)
 
 	if err := readToStruct(val, row, headers, fieldNames); err != nil {
 		return err
@@ -30,7 +30,12 @@ func BindCsv(i interface{}, row, headers []string) error {
 	return nil
 }
 
-func setFieldNames(t reflect.Type) []string {
+func BindToCsv(i any) []string {
+	val := reflect.ValueOf(i)
+	return writeFromStruct(val)
+}
+
+func getFieldNames(t reflect.Type) []string {
 	numField := t.NumField()
 	fieldNames := make([]string, 0, numField)
 
@@ -98,4 +103,26 @@ func readToStruct(t reflect.Value, row []string, headers, fieldNames []string) e
 	}
 
 	return nil
+}
+
+func writeFromStruct(v reflect.Value) []string {
+	countField := v.NumField()
+	values := make([]string, 0, countField)
+
+	for idx := 0; idx < countField; idx++ {
+		val := v.Field(idx).Interface()
+
+		switch v := val.(type) {
+		case string:
+			values = append(values, v)
+		case int32:
+			values = append(values, strconv.FormatInt(int64(v), 10))
+		case float32:
+			values = append(values, strconv.FormatFloat(float64(v), 'f', 2, 32))
+		case time.Time:
+			values = append(values, v.String())
+		}
+	}
+
+	return values
 }

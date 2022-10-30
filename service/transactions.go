@@ -3,6 +3,7 @@ package service
 import (
 	"bufio"
 	"context"
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"io"
@@ -38,11 +39,10 @@ func (s *Service) UploadCsvFile(ctx context.Context, f *multipart.FileHeader) er
 		return err
 	}
 	headers := strings.Split(string(l), ",")
-	chunks := 10
 	chTrans := make(chan []schemes.Transaction)
 	chError := make(chan error)
 
-	go s.r.InsertToTransactions(ctx, chunks, chTrans, chError)
+	go s.r.InsertToTransactions(ctx, s.c.ChunkSize, chTrans, chError)
 	if err = <-chError; err != nil {
 		return fmt.Errorf("InsertToTransactions initial gorootine: %w", err)
 	}
@@ -51,12 +51,12 @@ func (s *Service) UploadCsvFile(ctx context.Context, f *multipart.FileHeader) er
 
 mainLoop:
 	for {
-		records := make([]schemes.Transaction, 0, chunks)
+		records := make([]schemes.Transaction, 0, s.c.ChunkSize)
 		select {
 		case <-ctx.Done():
 			break mainLoop
 		default:
-			for len(records) != chunks {
+			for int32(len(records)) != s.c.ChunkSize {
 				row, _, err := reader.ReadLine()
 				if err != nil {
 					if errors.Is(err, io.EOF) {
@@ -70,7 +70,7 @@ mainLoop:
 				}
 
 				var t schemes.Transaction
-				if err = schemes.BindCsv(&t, strings.Split(string(row), ","), headers); err != nil {
+				if err = schemes.BindFromCsv(&t, strings.Split(string(row), ","), headers); err != nil {
 					errLoop = err
 					break mainLoop
 				}
@@ -111,11 +111,45 @@ mainLoop:
 	return nil
 }
 
-func (s *Service) GetSliceTransactions(ctx context.Context, rrt schemes.RawTransactionFilter) (schemes.SliceTransactions, error) {
+func (s *Service) GetFilteredTransactions(ctx context.Context, rrt schemes.RawTransactionFilter) (schemes.SliceTransactions, error) {
 	storedSliceT, err := s.r.GetSliceTransactions(ctx, schemes.NewTransactionFilterFromRaw(rrt))
 	if err != nil {
 		return schemes.SliceTransactions{}, fmt.Errorf("repository get slice transactions: %w", err)
 	}
 
-	return schemes.NewSliceTransactionFromDB(storedSliceT), nil
+	return schemes.NewSliceTransactionsFromDB(storedSliceT), nil
+}
+
+func (s *Service) DownloadCsvFile(ctx context.Context, w io.Writer) error {
+	p := schemes.Paginator{
+		Page:  1,
+		Limit: s.c.ChunkSize, // TODO: put in config chunks
+	}
+	writer := csv.NewWriter(w)
+	isHeaderWrote := false
+
+	for {
+		storTrans, err := s.r.GetTransactions(ctx, p)
+		if err != nil {
+			return err
+		}
+
+		st := schemes.NewSliceTransactionsFromDB(storTrans)
+		if !isHeaderWrote {
+			if err = writer.Write(st.GetCsvNames()); err != nil {
+				return err
+			}
+			isHeaderWrote = true
+		}
+
+		if err = writer.WriteAll(st.ToString()); err != nil {
+			return err
+		}
+
+		if int32(len(storTrans)) < p.Limit {
+			return nil
+		}
+
+		p.Page++
+	}
 }

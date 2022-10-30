@@ -1,6 +1,11 @@
 basePath: /api/v1
 definitions:
-  schemes.ResponseTransaction:
+  schemes.Response:
+    properties:
+      message:
+        type: string
+    type: object
+  schemes.Transaction:
     properties:
       amount_original:
         type: number
@@ -44,11 +49,6 @@ definitions:
         type: integer
       transaction_id:
         type: integer
-    type: object
-  server.Response:
-    properties:
-      message:
-        type: string
     type: object
 host: localhost:4444
 info:
@@ -108,13 +108,29 @@ paths:
           description: Show slice transactions
           schema:
             items:
-              $ref: '#/definitions/schemes.ResponseTransaction'
+              $ref: '#/definitions/schemes.Transaction'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/server.Response'
+            $ref: '#/definitions/schemes.Response'
       summary: show slice transactions
+      tags:
+      - Transactions
+  /csv-file/download:
+    get:
+      produces:
+      - text/csv
+      responses:
+        "200":
+          description: return csv file
+          schema:
+            type: file
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/schemes.Response'
+      summary: download csv file to database
       tags:
       - Transactions
   /csv-file/upload:
@@ -131,11 +147,19 @@ paths:
         "200":
           description: File is uploaded
           schema:
-            $ref: '#/definitions/server.Response'
-        "422":
-          description: failed to upload file
+            $ref: '#/definitions/schemes.Response'
+        "400":
+          description: transaction already exist
           schema:
-            $ref: '#/definitions/server.Response'
+            $ref: '#/definitions/schemes.Response'
+        "422":
+          description: invalid content type provided
+          schema:
+            $ref: '#/definitions/schemes.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/schemes.Response'
       summary: upload csv file to database
       tags:
       - Transactions
@@ -147,7 +171,7 @@ paths:
         "200":
           description: Server is alive
           schema:
-            $ref: '#/definitions/server.Response'
+            $ref: '#/definitions/schemes.Response'
       summary: show pong
       tags:
       - Healthcheck

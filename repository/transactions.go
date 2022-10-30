@@ -19,7 +19,7 @@ var (
 	ErrUniqueConstraint = errors.New("unique constraint")
 )
 
-func (r *Repository) InsertToTransactions(ctx context.Context, chunkSize int, chRows chan []schemes.Transaction, chError chan error) {
+func (r *Repository) InsertToTransactions(ctx context.Context, chunkSize int32, chRows chan []schemes.Transaction, chError chan error) {
 	tx, err := r.conn.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		chError <- err
@@ -52,7 +52,7 @@ mainLoop:
 				return
 			}
 
-			if len(rows) < chunkSize {
+			if int32(len(rows)) < chunkSize {
 				break mainLoop
 			}
 
@@ -86,4 +86,16 @@ func (r *Repository) GetSliceTransactions(ctx context.Context, rt schemes.Transa
 	}
 
 	return sliceT, nil
+}
+
+func (r *Repository) GetTransactions(ctx context.Context, p schemes.Paginator) ([]db.Transaction, error) {
+	storedTrans, err := r.q.GetTransactions(ctx, db.GetTransactionsParams{
+		Offset: p.Offset(),
+		Limit:  p.Limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return storedTrans, nil
 }

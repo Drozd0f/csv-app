@@ -35,17 +35,66 @@ type CreateTransactionsParams struct {
 	PaymentNarrative   string    `json:"payment_narrative"`
 }
 
+const getTransactions = `-- name: GetTransactions :many
+SELECT transaction_id, request_id, terminal_id, partner_object_id, amount_total, amount_original, commission_ps, commission_client, commission_provider, date_input, date_post, status, payment_type, payment_number, service_id, service, payee_id, payee_name, payee_bank_mfo, payee_bank_account, payment_narrative
+FROM transactions
+ORDER BY transaction_id LIMIT $2 OFFSET $1
+`
+
+type GetTransactionsParams struct {
+	Offset int32 `json:"offset"`
+	Limit  int32 `json:"limit"`
+}
+
+func (q *Queries) GetTransactions(ctx context.Context, arg GetTransactionsParams) ([]Transaction, error) {
+	rows, err := q.db.Query(ctx, getTransactions, arg.Offset, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Transaction
+	for rows.Next() {
+		var i Transaction
+		if err := rows.Scan(
+			&i.TransactionID,
+			&i.RequestID,
+			&i.TerminalID,
+			&i.PartnerObjectID,
+			&i.AmountTotal,
+			&i.AmountOriginal,
+			&i.CommissionPs,
+			&i.CommissionClient,
+			&i.CommissionProvider,
+			&i.DateInput,
+			&i.DatePost,
+			&i.Status,
+			&i.PaymentType,
+			&i.PaymentNumber,
+			&i.ServiceID,
+			&i.Service,
+			&i.PayeeID,
+			&i.PayeeName,
+			&i.PayeeBankMfo,
+			&i.PayeeBankAccount,
+			&i.PaymentNarrative,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const sliceTransactions = `-- name: SliceTransactions :many
 SELECT transaction_id, request_id, terminal_id, partner_object_id, amount_total, amount_original, commission_ps, commission_client, commission_provider, date_input, date_post, status, payment_type, payment_number, service_id, service, payee_id, payee_name, payee_bank_mfo, payee_bank_account, payment_narrative
 FROM transactions
 WHERE ($1::INTEGER = 0 OR transaction_id = $1)
 AND ($2::TEXT = 'default' OR status = $2)
 AND ($3::TEXT = 'default' OR payment_type = $3)
-AND (
-    ($4::TIMESTAMP = '0001-01-01' AND $5::TIMESTAMP = '0001-01-01')
-        OR
-    date_post BETWEEN $4 AND $5
-    )
+AND (($4::TIMESTAMP = '0001-01-01' AND $5::TIMESTAMP = '0001-01-01') OR date_post BETWEEN $4 AND $5)
 AND ($1::TEXT = '' OR payment_narrative SIMILAR TO '%' || $6 || '%')
 AND (cardinality($7::INTEGER[]) = 0 OR terminal_id = ANY($7))
 `

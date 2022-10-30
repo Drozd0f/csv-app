@@ -1,6 +1,7 @@
 package schemes
 
 import (
+	"reflect"
 	"strconv"
 	"time"
 
@@ -13,8 +14,6 @@ var (
 	DefaultString = "default"
 )
 
-type SliceTransactions []Transaction
-
 type RawDatePost struct {
 	From string `form:"from"`
 	To   string `form:"to"`
@@ -23,6 +22,34 @@ type RawDatePost struct {
 type DatePost struct {
 	From time.Time
 	To   time.Time
+}
+
+type SliceTransactions []Transaction
+
+func NewSliceTransactionsFromDB(storedTransactions []db.Transaction) SliceTransactions {
+	srt := make(SliceTransactions, 0, len(storedTransactions))
+	for _, st := range storedTransactions {
+		srt = append(srt, NewTransactionFromDB(st))
+	}
+
+	return srt
+}
+
+func (st SliceTransactions) GetCsvNames() []string {
+	if len(st) > 0 {
+		return st[0].GetCsvNames()
+	}
+
+	return nil
+}
+
+func (st SliceTransactions) ToString() [][]string {
+	sliceS := make([][]string, 0, len(st))
+	for _, t := range st {
+		sliceS = append(sliceS, t.ToString())
+	}
+
+	return sliceS
 }
 
 type RawTransactionFilter struct {
@@ -41,6 +68,17 @@ type TransactionFilter struct {
 	PaymentType      string
 	DatePost         DatePost
 	PaymentNarrative string
+}
+
+func NewTransactionFilterFromRaw(r RawTransactionFilter) TransactionFilter {
+	return TransactionFilter{
+		ID:               stringToInt32(r.ID),
+		Status:           stringToExpected(r.Status, statuses),
+		TerminalIDs:      sliceStringToInt32(r.TerminalIDs),
+		PaymentType:      stringToExpected(r.PaymentType, paymentTypes),
+		DatePost:         newDatePostFromRaw(r.DatePost),
+		PaymentNarrative: r.PaymentNarrative,
+	}
 }
 
 type Transaction struct {
@@ -67,26 +105,6 @@ type Transaction struct {
 	PaymentNarrative   string    `json:"payment_narrative" csv:"PaymentNarrative"`
 }
 
-func NewTransactionFilterFromRaw(r RawTransactionFilter) TransactionFilter {
-	return TransactionFilter{
-		ID:               stringToInt32(r.ID),
-		Status:           stringToExpected(r.Status, statuses),
-		TerminalIDs:      sliceStringToInt32(r.TerminalIDs),
-		PaymentType:      stringToExpected(r.PaymentType, paymentTypes),
-		DatePost:         newDatePostFromRaw(r.DatePost),
-		PaymentNarrative: r.PaymentNarrative,
-	}
-}
-
-func NewSliceTransactionFromDB(storedTransactions []db.Transaction) SliceTransactions {
-	srt := make(SliceTransactions, 0, len(storedTransactions))
-	for _, st := range storedTransactions {
-		srt = append(srt, NewTransactionFromDB(st))
-	}
-
-	return srt
-}
-
 func NewTransactionFromDB(storedT db.Transaction) Transaction {
 	return Transaction{
 		TransactionID:      storedT.TransactionID,
@@ -111,6 +129,14 @@ func NewTransactionFromDB(storedT db.Transaction) Transaction {
 		PayeeBankAccount:   storedT.PayeeBankAccount,
 		PaymentNarrative:   storedT.PaymentNarrative,
 	}
+}
+
+func (t Transaction) GetCsvNames() []string {
+	return getFieldNames(reflect.TypeOf(t))
+}
+
+func (t Transaction) ToString() []string {
+	return BindToCsv(t)
 }
 
 func stringToInt32(s string) int32 {
