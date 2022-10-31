@@ -1,4 +1,5 @@
 [![LinkedIn Badge](https://img.shields.io/badge/LinkedIn-Profile-informational?style=flat&logo=linkedin&logoColor=white&color=0D76A8)](https://www.linkedin.com/in/daniil-drozdov-a5393521b/)
+[![Tests](https://github.com/Drozd0f/csv-app/actions/workflows/tests.yml/badge.svg)](https://github.com/Drozd0f/csv-app/actions/workflows/tests.yml)
 
 # Виконання тестового завдання Trainee Golang Developer в EVO
 
