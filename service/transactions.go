@@ -29,6 +29,8 @@ func (s *Service) UploadCsvFile(ctx context.Context, f IFileHeader) error {
 	defer file.Close()
 
 	reader := bufio.NewReader(file)
+
+	// reading file headers
 	l, _, err := reader.ReadLine()
 	if err != nil {
 		if errors.Is(err, io.EOF) {
@@ -41,9 +43,11 @@ func (s *Service) UploadCsvFile(ctx context.Context, f IFileHeader) error {
 	chTrans := make(chan []schemes.Transaction)
 	chError := make(chan error)
 
+	// create goroutine for insert all transactions by one database transaction
 	go s.r.InsertToTransactions(ctx, s.c.ChunkSize, chTrans, chError)
+	// check channel error on error at goroutine initialization
 	if err = <-chError; err != nil {
-		return fmt.Errorf("InsertToTransactions initial gorootine: %w", err)
+		return fmt.Errorf("InsertToTransactions initial goroutine: %w", err)
 	}
 
 	var errLoop error
@@ -53,8 +57,11 @@ mainLoop:
 		records := make([]schemes.Transaction, 0, s.c.ChunkSize)
 		select {
 		case <-ctx.Done():
+			// if user request is turn down connection
 			break mainLoop
 		default:
+			// while ChunkSize to insert not equal to config value
+			// fil chunk slices
 			for int32(len(records)) != s.c.ChunkSize {
 				row, _, err := reader.ReadLine()
 				if err != nil {
