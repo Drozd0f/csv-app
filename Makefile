@@ -30,7 +30,7 @@ mockgen:
 generate: generate-sql generate-swagger mockgen
 
 setup-db:
-	docker run --name test-db \
+	@docker run --name test-db \
 	-e POSTGRES_USER=test \
 	-e POSTGRES_PASSWORD=test \
 	-e POSTGRES_DB=test \
@@ -39,7 +39,10 @@ setup-db:
 	postgres:latest
 
 cleanup-db:
-	docker rm -f test-db
+	@docker rm -f test-db
 
 tests:
 	@go test -v ./...
+
+pprof-heap:
+	@go tool pprof -http=:9091 http://localhost:4444/debug/pprof/heap

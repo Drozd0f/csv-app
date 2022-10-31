@@ -93,3 +93,8 @@ Format swagger documentation in code
 ```shell
 make fmt
 ```
+
+Discover application memory usage **Debug mod should be true**
+```shell
+pprof-heap
+```
