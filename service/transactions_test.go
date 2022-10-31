@@ -6,12 +6,13 @@ import (
 	"mime/multipart"
 	"strconv"
 
+	"github.com/golang/mock/gomock"
+
 	errs "github.com/Drozd0f/csv-app/errors"
-	mock_iservices "github.com/Drozd0f/csv-app/interfaces/services/mock"
 	"github.com/Drozd0f/csv-app/pkg/comparator"
 	"github.com/Drozd0f/csv-app/schemes"
+	mock_iservices "github.com/Drozd0f/csv-app/service/mock"
 	"github.com/Drozd0f/csv-app/test/fixtures"
-	"github.com/golang/mock/gomock"
 )
 
 func (ts *ServiceTestSuite) TestUploadCsvFile() {

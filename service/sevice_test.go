@@ -64,18 +64,11 @@ func TestServiceTestSuite(t *testing.T) {
 
 func (ts *ServiceTestSuite) SeedDB() {
 	file, err := fixtures.Fixtures.Open("transactions_test.csv")
-	if err != nil {
-		log.Fatalln(err)
-	}
+	ts.Require().NoError(err)
 
 	parser := csv.NewReader(file)
 	headers, err := parser.Read()
-	if err == io.EOF {
-		log.Fatalln("test file is empty")
-	}
-	if err != nil {
-		log.Fatalln(err)
-	}
+	ts.Require().NoError(err)
 
 	tranS := make([]schemes.Transaction, 0, countTestTransactions)
 
@@ -84,22 +77,16 @@ func (ts *ServiceTestSuite) SeedDB() {
 		if err == io.EOF {
 			break
 		}
-		if err != nil {
-			log.Fatalln(err)
-		}
+		ts.Require().NoError(err)
 
 		var t schemes.Transaction
-		if err = schemes.BindFromCsv(&t, row, headers); err != nil {
-			log.Fatalln(err)
-		}
+		ts.Require().NoError(schemes.BindFromCsv(&t, row, headers))
 
 		tranS = append(tranS, t)
 	}
 
 	err = ts.repository.Seed(ts.ctx, tranS)
-	if err != nil {
-		log.Fatalln("repository seed:", err)
-	}
+	ts.Require().NoError(err, "repository seed:")
 }
 
 func (ts *ServiceTestSuite) CleanupDB() {

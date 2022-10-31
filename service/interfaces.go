@@ -1,4 +1,4 @@
-package iservices
+package service
 
 import "mime/multipart"
 
@@ -10,4 +10,4 @@ type IFileHeader interface {
 	Open() (multipart.File, error)
 }
 
-//go:generate mockgen -destination=./mock/transactions.go -package=mock_iservices . IFileHeader,IFile
+//go:generate mockgen -destination=./mock/transactions.go . IFileHeader,IFile
