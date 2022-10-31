@@ -13,17 +13,21 @@ logs:
 init:
 	go install github.com/kyleconroy/sqlc/cmd/sqlc@latest
 	go install github.com/swaggo/swag/cmd/swag@latest
+	go install github.com/golang/mock/mockgen@v1.6.0
 
 fmt:
 	@swag fmt
 
 generate-sql:
-	sqlc generate
+	@sqlc generate
 
 generate-swagger:
 	@swag init -g ./cmd/main.go
 
-generate: generate-sql generate-swagger
+mockgen:
+	@go generate ./...
+
+generate: generate-sql generate-swagger mockgen
 
 setup-db:
 	docker run --name test-db \
@@ -36,3 +40,6 @@ setup-db:
 
 cleanup-db:
 	docker rm -f test-db
+
+tests:
+	@go test -v ./...
