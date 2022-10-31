@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"strings"
 
 	errs "github.com/Drozd0f/csv-app/errors"
@@ -21,7 +20,7 @@ var (
 	ErrTransactionExist = errors.New("transaction exist")
 )
 
-func (s *Service) UploadCsvFile(ctx context.Context, f *multipart.FileHeader) error {
+func (s *Service) UploadCsvFile(ctx context.Context, f IFileHeader) error {
 	file, err := f.Open()
 	if err != nil {
 		return ErrOpenFile

@@ -11,6 +11,7 @@ import (
 // @version     1.0
 // @description Виконання тестового завдання в EVO 2022
 
+// @query.collection.format  multi
 // @host     localhost:4444
 // @BasePath /api/v1
 func main() {

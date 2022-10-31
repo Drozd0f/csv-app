@@ -99,3 +99,21 @@ func (r *Repository) GetTransactions(ctx context.Context, p schemes.Paginator) (
 
 	return storedTrans, nil
 }
+
+func (r *Repository) Seed(ctx context.Context, sliceT []schemes.Transaction) error {
+	tranParam := parseToTransactionsParams(sliceT)
+	if _, err := r.q.CreateTransactions(ctx, tranParam); err != nil {
+		return fmt.Errorf("create transactions: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repository) Cleanup(ctx context.Context) error {
+	err := r.q.Cleanup(ctx)
+	if err != nil {
+		return fmt.Errorf("cleanup database: %w", err)
+	}
+
+	return nil
+}

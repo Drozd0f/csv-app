@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	statuses      = [2]string{"accepted", "declined"}
-	paymentTypes  = [2]string{"cash", "card"}
+	Statuses      = [2]string{"accepted", "declined"}
+	PaymentTypes  = [2]string{"cash", "card"}
 	DefaultString = "default"
 )
 
@@ -73,9 +73,9 @@ type TransactionFilter struct {
 func NewTransactionFilterFromRaw(r RawTransactionFilter) TransactionFilter {
 	return TransactionFilter{
 		ID:               stringToInt32(r.ID),
-		Status:           stringToExpected(r.Status, statuses),
+		Status:           stringToExpected(r.Status, Statuses),
 		TerminalIDs:      sliceStringToInt32(r.TerminalIDs),
-		PaymentType:      stringToExpected(r.PaymentType, paymentTypes),
+		PaymentType:      stringToExpected(r.PaymentType, PaymentTypes),
 		DatePost:         newDatePostFromRaw(r.DatePost),
 		PaymentNarrative: r.PaymentNarrative,
 	}

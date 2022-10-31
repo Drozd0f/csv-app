@@ -64,7 +64,8 @@ paths:
         in: query
         name: transaction_id
         type: integer
-      - description: Search by terminal_id (possible to specify several ids at the
+      - collectionFormat: multi
+        description: Search by terminal_id (possible to specify several ids at the
           same time)
         in: query
         items:

@@ -37,6 +37,7 @@ const docTemplate = `{
                         "items": {
                             "type": "integer"
                         },
+                        "collectionFormat": "multi",
                         "description": "Search by terminal_id (possible to specify several ids at the same time)",
                         "name": "terminal_id",
                         "in": "query"
