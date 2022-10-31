@@ -1,0 +1,8 @@
+CSVAPP_DBURI="postgres://test:test@db:5432/test?sslmode=disable"
+CSVAPP_ADDR=":8080"
+CSVAPP_DEBUG=true
+CSVAPP_CHUNK_SIZE=1000
+
+POSTGRES_USER=test
+POSTGRES_PASSWORD=test
+POSTGRES_DB=test

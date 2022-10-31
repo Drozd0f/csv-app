@@ -15,7 +15,7 @@
 ### Quick start
 
 > **Note**
-> First of all create and configure ops/.env file with next variables
+> First of check and change ops/environment file for your system
 
 ```
 CSVAPP_DBURI="DB_URI"
