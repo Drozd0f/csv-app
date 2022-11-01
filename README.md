@@ -47,7 +47,7 @@ make
 ---
 
 > **Warning**
-> For **generate**, **generate-sql** and **generate-swagger** **mockgen** you use next command
+> For **generate**, **generate-sql**, **generate-swagger** and **mockgen** use next command
 
 Installation base package
 ```shell
